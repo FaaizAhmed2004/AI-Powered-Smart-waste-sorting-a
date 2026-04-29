@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3000
+      - VITE_AI_API_URL=http://localhost:8000
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/waste_detector.pt:/app/waste_detector.pt
+      - ./backend/data:/app/data
+
+  rest-api:
+    build:
+      context: ./backend/base_server
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongo:27017/waste-sort
+      - JWT_ACCESS_SECRET=your-production-jwt-access-secret
+      - JWT_REFRESH_SECRET=your-production-jwt-refresh-secret
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=waste-sort
+
+volumes:
+  mongo_data:

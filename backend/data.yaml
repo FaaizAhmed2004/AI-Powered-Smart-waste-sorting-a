@@ -1,0 +1,5 @@
+train: data/dataset-resized
+val: data/dataset-resized
+
+nc: 6
+names: ['cardboard', 'glass', 'metal', 'paper', 'plastic', 'trash']

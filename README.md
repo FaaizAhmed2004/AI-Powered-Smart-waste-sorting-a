@@ -113,6 +113,7 @@ label
 confidence
 flagCount
 createdAt
+
 🎮 Gamification Overview
 🟢 +10 points → High confidence predictions (>70%)
 🟡 +5 points → Medium confidence (50–70%)
@@ -147,6 +148,7 @@ Model Development	🔄 In Progress
 Backend Development	🔄 In Progress
 Frontend Development	🔄 In Progress
 Integration & Testing	⏳ Pending
+
 Deployment	⏳ Pending
 🔮 Future Enhancements
 📱 AR-based real-time waste detection
@@ -157,6 +159,7 @@ Train and optimize ML model
 Connect full pipeline (Frontend → Backend → AI)
 Implement gamification system
 Deploy MVP version
+
 🤝 Contribution
 
 This project is currently in active development. Contributions, ideas, and feedback are welcome!
