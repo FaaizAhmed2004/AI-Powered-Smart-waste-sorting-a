@@ -1,0 +1,1 @@
+{"version":3,"file":"httpError.js","sourceRoot":"","sources":["../../../src/handlers/errorHandler/httpError.ts"],"names":[],"mappings":";;;;;AACA,gEAAuC;AAGvC,kBAAe,CAAC,IAAkB,EAAE,GAAoB,EAAE,GAAY,EAAE,kBAA0B,GAAG,EAAQ,EAAE;IAC3G,MAAM,QAAQ,GAAG,IAAA,qBAAW,EAAC,GAAG,EAAE,GAAG,EAAE,eAAe,CAAC,CAAA;IACvD,OAAO,IAAI,CAAC,QAAQ,CAAC,CAAA;AACzB,CAAC,CAAA"}

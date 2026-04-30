@@ -1,0 +1,32 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const application_1 = require("../constant/application");
+const router_1 = __importDefault(require("./router"));
+const authentication_1 = __importDefault(require("./user/authentication"));
+const management_1 = __importDefault(require("./user/management"));
+const communityrouter_1 = __importDefault(require("./Community/routes/communityrouter"));
+const educationroutes_1 = __importDefault(require("./Education/routes/educationroutes"));
+const games_router_1 = __importDefault(require("./Gamification/routes/games.router"));
+const classificationRoutes_1 = __importDefault(require("./Classification/routes/classificationRoutes"));
+const insightroutes_1 = __importDefault(require("./Insight/routes/insightroutes"));
+const location_routes_1 = __importDefault(require("./Location/routes/location.routes"));
+const authentication_2 = __importDefault(require("./admin/authentication"));
+const dashboard_1 = __importDefault(require("./admin/dashboard"));
+const App = (app) => {
+    app.use(`${application_1.API_ROOT}`, router_1.default);
+    app.use(`${application_1.API_ROOT}`, authentication_1.default);
+    app.use(`${application_1.API_ROOT}/user`, management_1.default);
+    app.use(`${application_1.API_ROOT}/community`, communityrouter_1.default);
+    app.use(`${application_1.API_ROOT}/`, educationroutes_1.default);
+    app.use(`${application_1.API_ROOT}/game`, games_router_1.default);
+    app.use(`${application_1.API_ROOT}/insight`, insightroutes_1.default);
+    app.use(`${application_1.API_ROOT}/classification`, classificationRoutes_1.default);
+    app.use(`${application_1.API_ROOT}`, location_routes_1.default);
+    app.use(`${application_1.API_ROOT}`, authentication_2.default);
+    app.use(`${application_1.API_ROOT}`, dashboard_1.default);
+};
+exports.default = App;
+//# sourceMappingURL=index.js.map
