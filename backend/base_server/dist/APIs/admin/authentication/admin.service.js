@@ -16,11 +16,13 @@ exports.adminLoginService = exports.adminRegistrationService = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = __importDefault(require("../../../config/config"));
+const logger_1 = __importDefault(require("../../../handlers/logger"));
 const Admin_1 = __importDefault(require("../model/Admin"));
 const errors_1 = require("../../../utils/errors");
 const adminRegistrationService = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password, firstName, lastName, role = 'admin', permissions = [] } = payload;
-    const existingAdmin = yield Admin_1.default.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    const existingAdmin = yield Admin_1.default.findOne({ email: normalizedEmail });
     if (existingAdmin) {
         throw new errors_1.CustomError('Admin with this email already exists', 409);
     }
@@ -39,7 +41,7 @@ const adminRegistrationService = (payload) => __awaiter(void 0, void 0, void 0, 
     const saltRounds = parseInt(config_1.default.BCRYPT.SALT_ROUNDS);
     const hashedPassword = yield bcrypt_1.default.hash(password, saltRounds);
     const newAdmin = yield Admin_1.default.create({
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         firstName,
         lastName,
@@ -71,12 +73,15 @@ const adminRegistrationService = (payload) => __awaiter(void 0, void 0, void 0, 
 exports.adminRegistrationService = adminRegistrationService;
 const adminLoginService = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = payload;
-    const admin = yield Admin_1.default.findOne({ email, isActive: true });
+    const normalizedEmail = email.trim().toLowerCase();
+    const admin = yield Admin_1.default.findOne({ email: normalizedEmail, isActive: true });
     if (!admin) {
+        logger_1.default.error(`Admin login failed: No active admin found with email ${normalizedEmail}`);
         throw new errors_1.CustomError('Invalid credentials', 401);
     }
     const isPasswordValid = yield bcrypt_1.default.compare(password, admin.password);
     if (!isPasswordValid) {
+        logger_1.default.error(`Admin login failed: Invalid password for email ${normalizedEmail}`);
         throw new errors_1.CustomError('Invalid credentials', 401);
     }
     const adminData = {

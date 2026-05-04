@@ -126,14 +126,16 @@ export default function AdminRegister() {
   };
 
   return (
-    <div className="min-h-screen bg-[#081e13] flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl p-8 bg-[#102d1f]/95 backdrop-blur-sm shadow-2xl border border-emerald-400/10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-fuchsia-500/10 to-pink-500/10 opacity-40 blur-3xl"></div>
+      
+      <Card className="w-full max-w-2xl p-8 bg-slate-900/80 backdrop-blur-xl shadow-2xl border border-violet-500/20 relative z-10">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
+          <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-violet-500/50">
             <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Admin Registration</h1>
-          <p className="text-emerald-200 mt-2">Create a new admin account</p>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent">Admin Registration</h1>
+          <p className="text-slate-300 mt-2 text-sm">Create a new admin account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -275,7 +277,7 @@ export default function AdminRegister() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200"
+            className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 shadow-lg shadow-violet-500/30"
           >
             {isLoading ? (
               <>
@@ -289,7 +291,7 @@ export default function AdminRegister() {
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-slate-400">
             Already have an admin account?{" "}
             <Link 
               to="/admin/login" 

@@ -19,24 +19,44 @@ const httpError_1 = __importDefault(require("../handlers/errorHandler/httpError"
 const responseMessage_1 = __importDefault(require("../constant/responseMessage"));
 const async_1 = __importDefault(require("../handlers/async"));
 exports.default = (0, async_1.default)((request, _response, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a;
     try {
         const req = request;
         const { cookies, headers } = req;
         let accessToken = (_a = headers.authorization) === null || _a === void 0 ? void 0 : _a.replace('Bearer ', '');
         if (!accessToken) {
-            const cookieToken = cookies === null || cookies === void 0 ? void 0 : cookies.accessToken;
+            const cookieToken = typeof (cookies === null || cookies === void 0 ? void 0 : cookies.accessToken) === 'string' ? cookies.accessToken : undefined;
             if (cookieToken) {
                 accessToken = cookieToken;
             }
         }
         if (accessToken) {
-            const { userId } = jwt_1.default.verifyToken(accessToken, config_1.default.TOKENS.ACCESS.SECRET);
-            const user = yield user_repository_1.default.findUserById(userId);
-            if (user) {
-                req.authenticatedUser = user;
-                req.user = { _id: (_b = user._id) === null || _b === void 0 ? void 0 : _b.toString() };
-                return next();
+            try {
+                const { userId } = jwt_1.default.verifyToken(accessToken, config_1.default.TOKENS.ACCESS.SECRET);
+                const user = yield user_repository_1.default.findUserById(userId);
+                if (user) {
+                    req.authenticatedUser = user;
+                    req.user = { _id: userId, id: userId };
+                    return next();
+                }
+            }
+            catch (tokenError) {
+                if (tokenError instanceof Error) {
+                    if (tokenError.name === 'TokenExpiredError') {
+                        (0, httpError_1.default)(next, new Error('Access token expired'), request, 401);
+                        return;
+                    }
+                    else if (tokenError.name === 'JsonWebTokenError') {
+                        (0, httpError_1.default)(next, new Error('Invalid access token'), request, 401);
+                        return;
+                    }
+                    else {
+                        throw tokenError;
+                    }
+                }
+                else {
+                    throw tokenError;
+                }
             }
         }
         (0, httpError_1.default)(next, new Error(responseMessage_1.default.UNAUTHORIZED), request, 401);

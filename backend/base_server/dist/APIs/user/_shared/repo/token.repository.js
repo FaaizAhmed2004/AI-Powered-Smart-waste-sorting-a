@@ -8,6 +8,12 @@ exports.default = {
     createToken: (payload) => {
         return token_model_1.default.create(payload);
     },
+    findToken: (token) => {
+        return token_model_1.default.findOne({ token: token });
+    },
+    saveToken: (token, userId) => {
+        return token_model_1.default.create({ token, userId });
+    },
     deleteToken: (token) => {
         return token_model_1.default.deleteOne({ token: token });
     }

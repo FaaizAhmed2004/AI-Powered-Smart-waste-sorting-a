@@ -107,40 +107,98 @@ const adminApi = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    withCredentials: true, // Send cookies with requests
 });
 
-// Override the interceptor for admin tokens
+// Override the interceptor for admin tokens (but only for authenticated requests)
 adminApi.interceptors.request.use((config) => {
     const token = localStorage.getItem('adminAccessToken');
-    if (token) {
+    // Only add auth header if token exists and we're not on a login/register endpoint
+    if (token && !config.url?.includes('/admin/login') && !config.url?.includes('/admin/register')) {
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
 });
 
+// Add response interceptor for admin API to handle token refresh
+adminApi.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+
+            try {
+                // For admin, we don't have a refresh endpoint yet, so redirect to login
+                localStorage.removeItem('adminAccessToken');
+                localStorage.removeItem('adminRefreshToken');
+                localStorage.removeItem('admin');
+                window.location.href = '/admin/login';
+                return Promise.reject(error);
+            } catch (refreshError) {
+                return Promise.reject(refreshError);
+            }
+        }
+
+        return Promise.reject(error);
+    }
+);
+
+const safeParseAdmin = (adminStr: string | null): Admin | null => {
+    if (!adminStr) return null;
+
+    try {
+        return JSON.parse(adminStr) as Admin;
+    } catch (error) {
+        console.warn("Invalid admin data in localStorage, clearing stale value.", error);
+        localStorage.removeItem('admin');
+        return null;
+    }
+};
+
 // Authentication
 export const adminLogin = async (credentials: AdminLoginRequest): Promise<AdminAuthResponse> => {
-    const response = await adminApi.post('/admin/login', credentials);
-    
-    if (response.data.success) {
-        localStorage.setItem('adminAccessToken', response.data.data.accessToken);
-        localStorage.setItem('adminRefreshToken', response.data.data.refreshToken);
-        localStorage.setItem('admin', JSON.stringify(response.data.data.admin));
+    try {
+        console.log('Admin login attempt with email:', credentials.email);
+        console.log('API Base URL:', API_BASE_URL);
+        
+        const response = await adminApi.post('/admin/login', credentials);
+        
+        console.log('Admin login response:', response.status);
+        const payload = response.data?.data ?? response.data;
+        
+        if (payload?.success && payload.data?.admin) {
+            localStorage.setItem('adminAccessToken', payload.data.accessToken);
+            localStorage.setItem('adminRefreshToken', payload.data.refreshToken);
+            localStorage.setItem('admin', JSON.stringify(payload.data.admin));
+        }
+        
+        return payload;
+    } catch (error: any) {
+        console.error('Admin login error details:', {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            message: error.response?.data?.message,
+            data: error.response?.data,
+            url: error.config?.url,
+            method: error.config?.method
+        });
+        throw error;
     }
-    
-    return response.data;
 };
 
 export const adminRegister = async (userData: AdminRegisterRequest): Promise<AdminAuthResponse> => {
     const response = await adminApi.post('/admin/register', userData);
+    const payload = response.data?.data ?? response.data;
     
-    if (response.data.success) {
-        localStorage.setItem('adminAccessToken', response.data.data.accessToken);
-        localStorage.setItem('adminRefreshToken', response.data.data.refreshToken);
-        localStorage.setItem('admin', JSON.stringify(response.data.data.admin));
+    if (payload?.success && payload.data?.admin) {
+        localStorage.setItem('adminAccessToken', payload.data.accessToken);
+        localStorage.setItem('adminRefreshToken', payload.data.refreshToken);
+        localStorage.setItem('admin', JSON.stringify(payload.data.admin));
     }
     
-    return response.data;
+    return payload;
 };
 
 export const adminLogout = async (): Promise<void> => {
@@ -154,12 +212,11 @@ export const adminLogout = async (): Promise<void> => {
 };
 
 export const getCurrentAdmin = (): Admin | null => {
-    const adminStr = localStorage.getItem('admin');
-    return adminStr ? JSON.parse(adminStr) : null;
+    return safeParseAdmin(localStorage.getItem('admin'));
 };
 
 export const isAdminAuthenticated = (): boolean => {
-    return !!localStorage.getItem('adminAccessToken');
+    return !!localStorage.getItem('adminAccessToken') && !!getCurrentAdmin();
 };
 
 // Dashboard APIs

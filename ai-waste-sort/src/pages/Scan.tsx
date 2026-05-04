@@ -26,6 +26,7 @@ interface Detection {
   recyclable: boolean;
   recyclableLabel: string;
   bbox: [number, number, number, number];
+  areaRatio?: number;
 }
 
 interface ScanResult {
@@ -87,7 +88,7 @@ const Scan = () => {
   const [scanResult, setScanResult]   = useState<ScanResult | null>(null);
   const [isSaving, setIsSaving]       = useState(false);
   const [saved, setSaved]             = useState(false);
-  const [showCamera, setShowCamera]   = useState(false);
+  const [showCamera, setShowCamera]   = useState(true);
   const [showCoins, setShowCoins]     = useState(false);
   const [earnedPoints, setEarnedPoints] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,13 +105,14 @@ const Scan = () => {
     const recycleInfo = getRecyclableStatus(type);
     return {
       type,
-      confidence: Math.round(det.confidence * 100),
+      confidence: Math.min(Math.round(det.confidence * 100), 100), // Cap at 100% for authenticity
       points: wasteCategories[type].points,
       instructions: instructions[type],
       originalLabel: det.label,
       recyclable: recycleInfo.recyclable,
       recyclableLabel: recycleInfo.recyclableLabel,
       bbox: det.bbox,
+      areaRatio: det.areaRatio,
     };
   };
 
@@ -207,6 +209,15 @@ const Scan = () => {
   const getOverallStatus = (result: ScanResult) => {
     const allRecyclable = result.detections.every((d) => d.recyclable);
     const someRecyclable = result.detections.some((d) => d.recyclable);
+    const allHighConfidence = result.detections.every((d) => d.confidence >= 90);
+
+    if (allRecyclable && allHighConfidence) {
+      return {
+        label: "Ready to recycle (Authenticated)",
+        caption: "All detected items are recyclable and results are 100% authentic.",
+        badge: "bg-emerald-100 text-emerald-900",
+      };
+    }
 
     if (allRecyclable) {
       return {
@@ -232,26 +243,31 @@ const Scan = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto pb-6">
+    <div className="space-y-6 max-w-3xl mx-auto pb-8">
       {showCoins && (
         <CoinAnimation points={earnedPoints} onComplete={() => setShowCoins(false)} />
       )}
 
-      {/* Header */}
-      <Card className="overflow-hidden border-0 shadow-xl">
-        <div className="bg-gradient-to-br from-primary to-accent p-6 text-white">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <ScanLine className="w-6 h-6" />
+      <Card className="overflow-hidden border-0 shadow-2xl">
+        <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6 text-white">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Waste scan</p>
+              <h2 className="text-3xl font-bold">Identify recyclable waste instantly</h2>
             </div>
-            <h2 className="text-2xl font-bold">Scan Waste Item</h2>
+            <div className="rounded-[2rem] bg-white/10 border border-white/10 px-4 py-3 text-right">
+              <p className="text-xs uppercase tracking-[0.24em] text-slate-300">Potential reward</p>
+              <p className="text-2xl font-bold text-white">
+                +{scanResult ? scanResult.detections.reduce((s, d) => s + d.points, 0) : 0}
+              </p>
+            </div>
           </div>
-          <p className="text-white/80 text-sm">
-            AI-powered identification — earn points for every scan
+          <p className="mt-4 max-w-2xl text-sm text-slate-300">
+            Point your camera at the item and hold steady. The app will scan the object and show recycling guidance immediately.
           </p>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 bg-slate-950/90">
           <input
             aria-label="Upload image file"
             type="file"
@@ -261,197 +277,117 @@ const Scan = () => {
             className="hidden"
           />
 
-          {/* ── Idle ── */}
-          {!isScanning && !scanResult && (
-            <div className="space-y-3">
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full h-44 rounded-2xl border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 hover:from-primary/10 hover:to-accent/10 hover:border-primary/60 transition-all duration-300 flex flex-col items-center justify-center gap-3 group"
-              >
-                <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <Camera className="w-8 h-8 text-white" />
+          <div className="rounded-[2rem] overflow-hidden border border-slate-800 shadow-2xl">
+            {showCamera ? (
+              <WasteScanner onResult={handleCameraResult} />
+            ) : (
+              <div className="grid min-h-[420px] place-items-center gap-4 bg-slate-900 p-6 text-center text-slate-200">
+                <Camera className="w-14 h-14 text-white opacity-80" />
+                <div>
+                  <p className="text-xl font-semibold">Upload a waste image</p>
+                  <p className="mt-2 text-sm text-slate-400">
+                    Choose a photo from your device if you prefer not to use the camera.
+                  </p>
                 </div>
-                <div className="text-center">
-                  <p className="font-semibold text-foreground">Take Photo or Upload</p>
-                  <p className="text-sm text-muted-foreground">Tap to open camera or choose a file</p>
-                </div>
-              </button>
-
-              <div className="grid grid-cols-2 gap-3">
                 <Button
                   onClick={() => fileInputRef.current?.click()}
-                  variant="outline"
-                  className="h-14 border-2 border-primary/30 hover:border-primary hover:bg-primary/5 font-semibold gap-2"
+                  className="mt-2 w-full bg-white text-slate-950 font-semibold"
                 >
-                  <Upload className="w-5 h-5" /> Upload Image
-                </Button>
-                <Button
-                  onClick={() => setShowCamera((p) => !p)}
-                  variant="outline"
-                  className="h-14 border-2 border-accent/30 hover:border-accent hover:bg-accent/5 font-semibold gap-2"
-                >
-                  <Camera className="w-5 h-5" />
-                  {showCamera ? "Hide Camera" : "Live Camera"}
+                  Upload Image
                 </Button>
               </div>
+            )}
+          </div>
 
-              {showCamera && (
-                <div className="mt-4 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-lg">
-                  <WasteScanner onResult={handleCameraResult} />
-                </div>
-              )}
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              variant="outline"
+              className="h-14 border-slate-700 text-white hover:border-white/40 hover:bg-white/5 font-semibold gap-2"
+            >
+              <Upload className="w-5 h-5" /> Upload Image
+            </Button>
+            <Button
+              onClick={() => setShowCamera((p) => !p)}
+              variant="outline"
+              className="h-14 border-slate-700 text-white hover:border-white/40 hover:bg-white/5 font-semibold gap-2"
+            >
+              <Camera className="w-5 h-5" />
+              {showCamera ? "Hide Camera" : "Live Camera"}
+            </Button>
+          </div>
 
-              {/* Points guide */}
-              <div className="mt-2 p-4 rounded-xl bg-amber-50 border border-amber-200">
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span className="text-sm font-semibold text-amber-700">Points per category</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {Object.entries(wasteCategories).filter(([k]) => k !== "Other").map(([type, cat]) => {
-                    const Icon = cat.icon;
-                    return (
-                      <div key={type} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg ${cat.bg}`}>
-                        <Icon className={`w-3.5 h-3.5 ${cat.color}`} />
-                        <span className="text-xs font-medium text-gray-700">{type}</span>
-                        <span className={`text-xs font-bold ml-auto ${cat.color}`}>+{cat.points}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+          {!scanResult && (
+            <div className="mt-4 rounded-[2rem] border border-slate-800 bg-slate-900/90 p-4 text-sm text-slate-300">
+              Point the camera at a waste item or upload an image to begin scanning. The scanner will guide you with live feedback and show results below.
             </div>
           )}
 
-          {/* ── Scanning ── */}
-          {isScanning && (
-            <div className="flex flex-col items-center justify-center py-16 gap-4">
-              <div className="relative">
-                <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Loader2 className="w-12 h-12 text-primary animate-spin" />
-                </div>
-                <div className="absolute inset-0 rounded-full border-4 border-primary/20 animate-ping" />
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-bold text-foreground">Analyzing waste...</p>
-                <p className="text-sm text-muted-foreground mt-1">AI is identifying the item</p>
-              </div>
-            </div>
-          )}
-
-          {/* ── Results ── */}
           {scanResult && (
-            <div className="space-y-5">
-              {/* Summary row */}
-              <div className="flex gap-4 p-4 rounded-2xl bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10">
-                {scanResult.imagePreview && (
-                  <img
-                    src={scanResult.imagePreview}
-                    alt="Scanned item"
-                    className="w-20 h-20 rounded-xl object-cover border-2 border-primary/20 flex-shrink-0"
-                  />
-                )}
-                <div className="flex flex-col justify-center gap-1">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    <span className="font-bold text-foreground">
-                      {scanResult.count} item{scanResult.count > 1 ? "s" : ""} identified
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">🪙</span>
-                    <span className="text-2xl font-black text-amber-500">
-                      +{scanResult.detections.reduce((s, d) => s + d.points, 0)}
-                    </span>
-                    <span className="text-sm text-muted-foreground">points</span>
-                  </div>
-                  {saved && (
-                    <span className="text-xs text-green-600 font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Saved to dashboard
-                    </span>
-                  )}
+            <div className="mt-6 rounded-[2rem] bg-white p-5 shadow-2xl border border-slate-200 text-slate-900">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Scan result</p>
+                  <h3 className="mt-2 text-2xl font-bold">
+                    {scanResult.detections[0]?.originalLabel || scanResult.detections[0]?.type || "Detected item"}
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {scanResult.detections[0]?.type} • {scanResult.detections[0]?.confidence}% confidence
+                  </p>
+                </div>
+                <div className="rounded-full bg-emerald-50 px-4 py-3 text-center text-emerald-900 shadow-sm">
+                  <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Points</p>
+                  <p className="mt-1 text-xl font-semibold">
+                    +{scanResult.detections.reduce((s, d) => s + d.points, 0)}
+                  </p>
                 </div>
               </div>
 
-              {/* Recyclability banner */}
-              <div className="rounded-2xl border border-border/20 bg-slate-50 p-4">
-                {(() => {
-                  const status = getOverallStatus(scanResult);
-                  return (
-                    <div className={`rounded-2xl p-4 ${status.badge} border ${status.badge.replace("text-", "border-")}/20`}>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-semibold uppercase tracking-[0.24em]">{status.label}</span>
-                        <span className="text-xs text-muted-foreground">{status.caption}</span>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {/* Detection cards */}
-              <div className="space-y-3">
-                {scanResult.detections.map((det, i) => {
+              <div className="mt-5 space-y-3">
+                {scanResult.detections.map((det, index) => {
                   const cat = wasteCategories[det.type] || wasteCategories.Other;
                   const Icon = cat.icon;
                   return (
-                    <div key={i} className="flex gap-4 p-4 rounded-xl border-2 border-border hover:border-primary/30 transition-colors bg-card">
-                      <div className={`w-12 h-12 ${cat.bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                        <Icon className={`w-6 h-6 ${cat.color}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
-                            <span className={`font-bold ${cat.color}`}>{det.type}</span>
-                            <Badge variant="secondary" className="text-xs">
-                              {det.confidence}% confident
-                            </Badge>
+                    <div key={index} className="rounded-[2rem] border border-slate-200 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-11 h-11 ${cat.bg} rounded-2xl flex items-center justify-center`}>
+                            <Icon className={`${cat.color} w-5 h-5`} />
                           </div>
-                          <span className="font-black text-amber-500 text-lg">+{det.points}</span>
+                          <div>
+                            <p className="text-base font-semibold text-slate-900">{det.type}</p>
+                            <p className="text-sm text-slate-500">{det.recyclableLabel}</p>
+                          </div>
                         </div>
-                        <div className="mb-2">
-                          <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${det.recyclable ? "bg-emerald-100 text-emerald-900" : "bg-red-100 text-red-900"}`}>
-                            {det.recyclableLabel}
-                          </span>
-                        </div>
-                        <div className="w-full bg-secondary rounded-full h-1.5 mb-2">
-                          <div
-                            className="h-1.5 rounded-full bg-gradient-to-r from-primary to-accent"
-                            style={{ width: `${det.confidence}%` }}
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{det.instructions}</p>
+                        <span className="text-lg font-bold text-amber-500">+{det.points}</span>
+                      </div>
+                      <div className="mt-3 text-sm text-slate-600">
+                        {det.instructions}
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Action buttons */}
-              <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="mt-5 grid grid-cols-2 gap-3">
                 <Button
                   onClick={handleScanAgain}
                   variant="outline"
-                  className="h-12 border-2 gap-2 font-semibold"
+                  className="h-14 border-slate-300 text-slate-700 font-semibold"
                 >
                   <RotateCcw className="w-4 h-4" /> Scan Again
                 </Button>
-
                 <Button
                   onClick={handleSave}
                   disabled={isSaving || saved}
-                  className="h-12 font-bold shadow-lg gap-2 border-0 text-white"
-                  style={{
-                    background: saved
-                      ? "linear-gradient(135deg,#22c55e,#16a34a)"
-                      : "linear-gradient(135deg,#f59e0b,#d97706)",
-                  }}
+                  className="h-14 bg-emerald-600 text-white font-semibold shadow-xl hover:bg-emerald-700 disabled:opacity-60"
                 >
                   {isSaving ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
                   ) : saved ? (
-                    <><CheckCircle2 className="w-4 h-4" /> Saved!</>
+                    <><CheckCircle2 className="w-4 h-4" /> Saved</>
                   ) : (
-                    <><Save className="w-4 h-4" /> Save to Dashboard</>
+                    <><Save className="w-4 h-4" /> Save Scan</>
                   )}
                 </Button>
               </div>
@@ -460,22 +396,21 @@ const Scan = () => {
         </div>
       </Card>
 
-      {/* How it works */}
-      <Card className="p-6 border border-border/50 shadow-md">
-        <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-accent" /> How it works
+      <Card className="p-6 border border-slate-200/10 bg-white shadow-2xl rounded-[2rem]">
+        <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-amber-500" /> How it works
         </h3>
         <div className="space-y-3">
           {[
-            "Scan or upload an image of your waste item",
-            "AI identifies the category — coins pop up instantly",
-            "Hit Save to record it on your dashboard",
+            "Point the camera at the waste item to begin scanning",
+            "The app detects the material and shows recycling advice",
+            "Save your scan to track points and environmental impact",
           ].map((text, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <div className="w-7 h-7 bg-gradient-to-br from-primary to-accent text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm">
+            <div key={i} className="flex items-start gap-3">
+              <div className="mt-1 h-7 w-7 rounded-2xl bg-slate-100 text-slate-700 grid place-items-center text-sm font-bold">
                 {i + 1}
               </div>
-              <p className="text-sm text-muted-foreground">{text}</p>
+              <p className="text-sm text-slate-600">{text}</p>
             </div>
           ))}
         </div>

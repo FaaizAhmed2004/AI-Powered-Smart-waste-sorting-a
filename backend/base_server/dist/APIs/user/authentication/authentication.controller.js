@@ -24,6 +24,7 @@ const health_1 = __importDefault(require("../../../utils/health"));
 const application_1 = require("../../../constant/application");
 const config_1 = __importDefault(require("../../../config/config"));
 const token_repository_1 = __importDefault(require("../_shared/repo/token.repository"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 exports.default = {
     register: (0, async_1.default)((request, response, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
@@ -77,7 +78,7 @@ exports.default = {
                     .cookie('accessToken', isLoggedIn.accessToken, {
                     path: '/v1',
                     domain: DOMAIN,
-                    sameSite: 'strict',
+                    sameSite: 'none',
                     maxAge: 1000 * config_1.default.TOKENS.ACCESS.EXPIRY,
                     httpOnly: true,
                     secure: !(config_1.default.ENV === application_1.EApplicationEnvironment.DEVELOPMENT)
@@ -85,7 +86,7 @@ exports.default = {
                     .cookie('refreshToken', isLoggedIn.refreshToken, {
                     path: '/v1',
                     domain: DOMAIN,
-                    sameSite: 'strict',
+                    sameSite: 'none',
                     maxAge: 1000 * config_1.default.TOKENS.REFRESH.EXPIRY,
                     httpOnly: true,
                     secure: !(config_1.default.ENV === application_1.EApplicationEnvironment.DEVELOPMENT)
@@ -114,7 +115,7 @@ exports.default = {
                 .clearCookie('accessToken', {
                 path: '/v1',
                 domain: DOMAIN,
-                sameSite: 'strict',
+                sameSite: 'none',
                 maxAge: 1000 * config_1.default.TOKENS.ACCESS.EXPIRY,
                 httpOnly: true,
                 secure: !(config_1.default.ENV === application_1.EApplicationEnvironment.DEVELOPMENT)
@@ -122,7 +123,7 @@ exports.default = {
                 .clearCookie('refreshToken', {
                 path: '/v1',
                 domain: DOMAIN,
-                sameSite: 'strict',
+                sameSite: 'none',
                 maxAge: 1000 * config_1.default.TOKENS.REFRESH.EXPIRY,
                 httpOnly: true,
                 secure: !(config_1.default.ENV === application_1.EApplicationEnvironment.DEVELOPMENT)
@@ -131,6 +132,56 @@ exports.default = {
         }
         catch (error) {
             (0, httpError_1.default)(next, error, request, 500);
+        }
+    })),
+    refreshToken: (0, async_1.default)((request, response, next) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const { cookies, body } = request;
+            const { refreshToken: cookieRefreshToken } = cookies;
+            const { refreshToken: bodyRefreshToken } = body;
+            const refreshToken = cookieRefreshToken || bodyRefreshToken;
+            if (!refreshToken) {
+                return (0, httpError_1.default)(next, new Error('Refresh token not provided'), request, 401);
+            }
+            const decoded = jsonwebtoken_1.default.verify(refreshToken, config_1.default.TOKENS.REFRESH.SECRET);
+            const tokenExists = yield token_repository_1.default.findToken(refreshToken);
+            if (!tokenExists) {
+                return (0, httpError_1.default)(next, new Error('Invalid refresh token'), request, 401);
+            }
+            const newAccessToken = jsonwebtoken_1.default.sign({ userId: decoded.userId }, config_1.default.TOKENS.ACCESS.SECRET, { expiresIn: config_1.default.TOKENS.ACCESS.EXPIRY });
+            const newRefreshToken = jsonwebtoken_1.default.sign({ userId: decoded.userId }, config_1.default.TOKENS.REFRESH.SECRET, { expiresIn: config_1.default.TOKENS.REFRESH.EXPIRY });
+            yield token_repository_1.default.deleteToken(refreshToken);
+            yield token_repository_1.default.saveToken(newRefreshToken, decoded.userId);
+            const DOMAIN = health_1.default.getDomain();
+            response
+                .cookie('accessToken', newAccessToken, {
+                path: '/v1',
+                domain: DOMAIN,
+                sameSite: 'none',
+                maxAge: 1000 * config_1.default.TOKENS.ACCESS.EXPIRY,
+                httpOnly: true,
+                secure: !(config_1.default.ENV === application_1.EApplicationEnvironment.DEVELOPMENT)
+            })
+                .cookie('refreshToken', newRefreshToken, {
+                path: '/v1',
+                domain: DOMAIN,
+                sameSite: 'none',
+                maxAge: 1000 * config_1.default.TOKENS.REFRESH.EXPIRY,
+                httpOnly: true,
+                secure: !(config_1.default.ENV === application_1.EApplicationEnvironment.DEVELOPMENT)
+            });
+            (0, httpResponse_1.default)(response, request, 200, 'Token refreshed successfully', {
+                accessToken: newAccessToken,
+                refreshToken: newRefreshToken
+            });
+        }
+        catch (error) {
+            if (error instanceof jsonwebtoken_1.default.JsonWebTokenError) {
+                (0, httpError_1.default)(next, new Error('Invalid refresh token'), request, 401);
+            }
+            else {
+                (0, httpError_1.default)(next, error, request, 500);
+            }
         }
     }))
 };

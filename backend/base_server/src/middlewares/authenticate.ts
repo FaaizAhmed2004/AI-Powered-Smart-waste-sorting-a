@@ -17,22 +17,39 @@ export default asyncHandler(async (request: Request, _response: Response, next: 
         let accessToken = headers.authorization?.replace('Bearer ', '')
         
         if (!accessToken) {
-            const cookieToken = cookies?.accessToken
+            const cookieToken = typeof cookies?.accessToken === 'string' ? cookies.accessToken : undefined
             if (cookieToken) {
                 accessToken = cookieToken
             }
         }
 
         if (accessToken) {
-            const { userId } = jwt.verifyToken(accessToken, config.TOKENS.ACCESS.SECRET) as IDecryptedJwt
+            try {
+                const { userId } = jwt.verifyToken(accessToken, config.TOKENS.ACCESS.SECRET) as IDecryptedJwt
 
-            const user = await query.findUserById(userId)
-            if (user) {
-                req.authenticatedUser = user
-                // Also set req.user for compatibility with classification controller
-                // Cast user to any to access _id property from Mongoose document
-                req.user = { _id: (user as any)._id?.toString() }
-                return next()
+                const user = await query.findUserById(userId)
+                if (user) {
+                    req.authenticatedUser = user
+                    // Also set req.user for compatibility with classification controller
+                    req.user = { _id: userId, id: userId }
+                    return next()
+                }
+            } catch (tokenError: unknown) {
+                // Handle specific JWT errors
+                if (tokenError instanceof Error) {
+                    if (tokenError.name === 'TokenExpiredError') {
+                        httpError(next, new Error('Access token expired'), request, 401)
+                        return
+                    } else if (tokenError.name === 'JsonWebTokenError') {
+                        httpError(next, new Error('Invalid access token'), request, 401)
+                        return
+                    } else {
+                        // Re-throw other errors
+                        throw tokenError
+                    }
+                } else {
+                    throw tokenError
+                }
             }
         }
         httpError(next, new Error(responseMessage.UNAUTHORIZED), request, 401)

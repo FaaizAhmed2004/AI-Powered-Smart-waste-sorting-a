@@ -1,15 +1,17 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import config from '../../../config/config'
+import logger from '../../../handlers/logger'
 import Admin from '../model/Admin'
 import { IAdminRegisterRequest, IAdminLoginRequest, IAdminAuthResponse, IAuthenticatedAdmin } from './types/admin.interface'
 import { CustomError } from '../../../utils/errors'
 
 export const adminRegistrationService = async (payload: IAdminRegisterRequest): Promise<IAdminAuthResponse> => {
     const { email, password, firstName, lastName, role = 'admin', permissions = [] } = payload
+    const normalizedEmail = email.trim().toLowerCase()
 
     // Check if admin already exists
-    const existingAdmin = await Admin.findOne({ email })
+    const existingAdmin = await Admin.findOne({ email: normalizedEmail })
     if (existingAdmin) {
         throw new CustomError('Admin with this email already exists', 409)
     }
@@ -33,7 +35,7 @@ export const adminRegistrationService = async (payload: IAdminRegisterRequest): 
 
     // Create admin
     const newAdmin = await Admin.create({
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         firstName,
         lastName,
@@ -44,7 +46,7 @@ export const adminRegistrationService = async (payload: IAdminRegisterRequest): 
 
     // Generate tokens
     const adminData: IAuthenticatedAdmin = {
-        _id: newAdmin._id!.toString(),
+        _id: newAdmin._id.toString(),
         email: newAdmin.email,
         firstName: newAdmin.firstName,
         lastName: newAdmin.lastName,
@@ -78,22 +80,25 @@ export const adminRegistrationService = async (payload: IAdminRegisterRequest): 
 
 export const adminLoginService = async (payload: IAdminLoginRequest): Promise<IAdminAuthResponse> => {
     const { email, password } = payload
+    const normalizedEmail = email.trim().toLowerCase()
 
     // Find admin
-    const admin = await Admin.findOne({ email, isActive: true })
+    const admin = await Admin.findOne({ email: normalizedEmail, isActive: true })
     if (!admin) {
+        logger.error(`Admin login failed: No active admin found with email ${normalizedEmail}`)
         throw new CustomError('Invalid credentials', 401)
     }
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, admin.password)
     if (!isPasswordValid) {
+        logger.error(`Admin login failed: Invalid password for email ${normalizedEmail}`)
         throw new CustomError('Invalid credentials', 401)
     }
 
     // Generate tokens
     const adminData: IAuthenticatedAdmin = {
-        _id: admin._id!.toString(),
+        _id: admin._id.toString(),
         email: admin.email,
         firstName: admin.firstName,
         lastName: admin.lastName,

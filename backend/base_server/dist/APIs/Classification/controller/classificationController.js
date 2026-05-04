@@ -16,7 +16,7 @@ exports.deleteClassification = exports.getAllClassifications = exports.getUserCl
 const Classification_1 = __importDefault(require("../model/Classification"));
 const express_validator_1 = require("express-validator");
 const classifyImage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
         const errors = (0, express_validator_1.validationResult)(req);
         if (!errors.isEmpty())
@@ -27,8 +27,15 @@ const classifyImage = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 message: 'imageUrl, label, and confidence are required'
             });
         }
+        const userId = ((_a = req.user) === null || _a === void 0 ? void 0 : _a._id) || ((_b = req.user) === null || _b === void 0 ? void 0 : _b.id);
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: 'User authentication failed'
+            });
+        }
         const classification = yield Classification_1.default.create({
-            userId: (_a = req.user) === null || _a === void 0 ? void 0 : _a.id,
+            userId,
             imageUrl,
             label,
             confidence: parseFloat(confidence)
@@ -41,6 +48,7 @@ const classifyImage = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
     catch (err) {
         const errorMessage = err instanceof Error ? err.message : typeof err === 'string' ? err : JSON.stringify(err);
+        console.error('Classification save error:', errorMessage);
         return res.status(500).json({
             success: false,
             message: 'Failed to save classification',
@@ -50,16 +58,33 @@ const classifyImage = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.classifyImage = classifyImage;
 const getUserClassifications = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
         const { userId } = req.params;
+        const authenticatedUserId = ((_a = req.user) === null || _a === void 0 ? void 0 : _a._id) || ((_b = req.user) === null || _b === void 0 ? void 0 : _b.id);
+        if (!authenticatedUserId) {
+            return res.status(401).json({
+                success: false,
+                message: 'User authentication failed'
+            });
+        }
+        if (userId !== authenticatedUserId) {
+            console.warn(`Unauthorized access attempt: User ${authenticatedUserId} tried to access ${userId}'s classifications`);
+            return res.status(403).json({
+                success: false,
+                message: 'Unauthorized: Cannot access other user\'s classifications'
+            });
+        }
         const records = yield Classification_1.default.find({ userId }).sort({ createdAt: -1 });
         return res.status(200).json({ success: true, data: records });
     }
     catch (err) {
+        const errorMessage = err instanceof Error ? err.message : typeof err === 'string' ? err : JSON.stringify(err);
+        console.error('Get classifications error:', errorMessage);
         return res.status(500).json({
             success: false,
             message: 'Failed to fetch classifications',
-            error: err
+            error: errorMessage
         });
     }
 });
@@ -75,15 +100,31 @@ const getAllClassifications = (_req, res) => __awaiter(void 0, void 0, void 0, f
 });
 exports.getAllClassifications = getAllClassifications;
 const deleteClassification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
         const { id } = req.params;
-        const deleted = yield Classification_1.default.findByIdAndDelete(id);
-        if (!deleted)
+        const record = yield Classification_1.default.findById(id);
+        if (!record) {
             return res.status(404).json({ success: false, message: 'Record not found' });
+        }
+        const authenticatedUserId = ((_a = req.user) === null || _a === void 0 ? void 0 : _a._id) || ((_b = req.user) === null || _b === void 0 ? void 0 : _b.id);
+        if (record.userId !== authenticatedUserId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Unauthorized: Cannot delete other user\'s classifications'
+            });
+        }
+        yield Classification_1.default.findByIdAndDelete(id);
         return res.status(200).json({ success: true, message: 'Record deleted' });
     }
     catch (err) {
-        return res.status(500).json({ success: false, message: 'Server error', error: err });
+        const errorMessage = err instanceof Error ? err.message : typeof err === 'string' ? err : JSON.stringify(err);
+        console.error('Delete classification error:', errorMessage);
+        return res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: errorMessage
+        });
     }
 });
 exports.deleteClassification = deleteClassification;

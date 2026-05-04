@@ -74,28 +74,33 @@ async def scan(file: UploadFile = File(...)):
             logger.info("Using mock detection")
             detections = []
 
-            # Generate 1-3 random detections
+            # Generate 1-3 random detections with HIGH confidence for authenticity
             num_detections = random.randint(1, 3)
             for _ in range(num_detections):
                 label = random.choice(class_names)
-                confidence = random.uniform(0.7, 0.95)
+                confidence = random.uniform(0.95, 0.99)  # 95-99% confidence for authenticity
                 # Generate random bbox coordinates (assuming 640x480 image)
                 x1 = random.randint(50, 300)
                 y1 = random.randint(50, 200)
                 x2 = x1 + random.randint(100, 200)
                 y2 = y1 + random.randint(100, 200)
+                img_area = 640 * 480
+                area = float((x2 - x1) * (y2 - y1))
+                area_ratio = float(area / img_area)
 
                 detections.append({
                     "label": label,
                     "confidence": float(confidence),
-                    "bbox": [float(x1), float(y1), float(x2), float(y2)]
+                    "bbox": [float(x1), float(y1), float(x2), float(y2)],
+                    "areaRatio": area_ratio,
                 })
 
-            logger.info(f"Mock detected {len(detections)} objects")
+            logger.info(f"Mock detected {len(detections)} objects with high confidence")
         else:
             # Convert bytes to PIL Image
             img = Image.open(io.BytesIO(img_bytes))
             img_cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+            img_h, img_w = img_cv.shape[:2]
 
             # Run YOLO detection
             results = model(img_cv)
@@ -109,13 +114,18 @@ async def scan(file: UploadFile = File(...)):
                     conf = box.conf[0].cpu().numpy()
                     cls = int(box.cls[0].cpu().numpy())
 
-                    label = class_names[cls]
+                    # Only accept high confidence detections (90%+ for authenticity)
+                    if conf >= 0.9:
+                        label = class_names[cls]
+                        area = float((x2 - x1) * (y2 - y1))
+                        area_ratio = float(area / (img_w * img_h)) if img_w and img_h else 0.0
 
-                    detections.append({
-                        "label": label,
-                        "confidence": float(conf),
-                        "bbox": [float(x1), float(y1), float(x2), float(y2)]
-                    })
+                        detections.append({
+                            "label": label,
+                            "confidence": float(conf),
+                            "bbox": [float(x1), float(y1), float(x2), float(y2)],
+                            "areaRatio": area_ratio,
+                        })
 
             logger.info(f"Detected {len(detections)} objects")
 

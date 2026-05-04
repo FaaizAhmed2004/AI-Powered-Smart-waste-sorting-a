@@ -12,6 +12,7 @@ import health from '../../../utils/health'
 import { EApplicationEnvironment } from '../../../constant/application'
 import config from '../../../config/config'
 import query from '../_shared/repo/token.repository'
+import jwt from 'jsonwebtoken'
 
 export default {
     register: asyncHandler(async (request: Request, response: Response, next: NextFunction) => {
@@ -72,7 +73,7 @@ export default {
                     .cookie('accessToken', isLoggedIn.accessToken, {
                         path: '/v1',
                         domain: DOMAIN,
-                        sameSite: 'strict',
+                        sameSite: 'none',
                         maxAge: 1000 * config.TOKENS.ACCESS.EXPIRY,
                         httpOnly: true,
                         secure: !(config.ENV === EApplicationEnvironment.DEVELOPMENT)
@@ -80,7 +81,7 @@ export default {
                     .cookie('refreshToken', isLoggedIn.refreshToken, {
                         path: '/v1',
                         domain: DOMAIN,
-                        sameSite: 'strict',
+                        sameSite: 'none',
                         maxAge: 1000 * config.TOKENS.REFRESH.EXPIRY,
                         httpOnly: true,
                         secure: !(config.ENV === EApplicationEnvironment.DEVELOPMENT)
@@ -112,7 +113,7 @@ export default {
                 .clearCookie('accessToken', {
                     path: '/v1',
                     domain: DOMAIN,
-                    sameSite: 'strict',
+                    sameSite: 'none',
                     maxAge: 1000 * config.TOKENS.ACCESS.EXPIRY,
                     httpOnly: true,
                     secure: !(config.ENV === EApplicationEnvironment.DEVELOPMENT)
@@ -120,7 +121,7 @@ export default {
                 .clearCookie('refreshToken', {
                     path: '/v1',
                     domain: DOMAIN,
-                    sameSite: 'strict',
+                    sameSite: 'none',
                     maxAge: 1000 * config.TOKENS.REFRESH.EXPIRY,
                     httpOnly: true,
                     secure: !(config.ENV === EApplicationEnvironment.DEVELOPMENT)
@@ -129,6 +130,77 @@ export default {
             httpResponse(response, request, 200, responseMessage.SUCCESS, null)
         } catch (error) {
             httpError(next, error, request, 500)
+        }
+    }),
+    refreshToken: asyncHandler(async (request: Request, response: Response, next: NextFunction) => {
+        try {
+            const { cookies, body } = request
+            const { refreshToken: cookieRefreshToken } = cookies as {
+                refreshToken: string | undefined
+            }
+            const { refreshToken: bodyRefreshToken } = body as { refreshToken?: string }
+
+            const refreshToken = cookieRefreshToken || bodyRefreshToken
+            if (!refreshToken) {
+                return httpError(next, new Error('Refresh token not provided'), request, 401)
+            }
+
+            // Verify refresh token
+            const decoded = jwt.verify(refreshToken, config.TOKENS.REFRESH.SECRET) as { userId: string }
+
+            // Check if refresh token exists in database
+            const tokenExists = await query.findToken(refreshToken)
+            if (!tokenExists) {
+                return httpError(next, new Error('Invalid refresh token'), request, 401)
+            }
+
+            // Generate new tokens
+            const newAccessToken = jwt.sign(
+                { userId: decoded.userId },
+                config.TOKENS.ACCESS.SECRET,
+                { expiresIn: config.TOKENS.ACCESS.EXPIRY }
+            )
+
+            const newRefreshToken = jwt.sign(
+                { userId: decoded.userId },
+                config.TOKENS.REFRESH.SECRET,
+                { expiresIn: config.TOKENS.REFRESH.EXPIRY }
+            )
+
+            // Delete old refresh token and save new one
+            await query.deleteToken(refreshToken)
+            await query.saveToken(newRefreshToken, decoded.userId)
+
+            // Set new cookies
+            const DOMAIN = health.getDomain()
+            response
+                .cookie('accessToken', newAccessToken, {
+                    path: '/v1',
+                    domain: DOMAIN,
+                    sameSite: 'none',
+                    maxAge: 1000 * config.TOKENS.ACCESS.EXPIRY,
+                    httpOnly: true,
+                    secure: !(config.ENV === EApplicationEnvironment.DEVELOPMENT)
+                })
+                .cookie('refreshToken', newRefreshToken, {
+                    path: '/v1',
+                    domain: DOMAIN,
+                    sameSite: 'none',
+                    maxAge: 1000 * config.TOKENS.REFRESH.EXPIRY,
+                    httpOnly: true,
+                    secure: !(config.ENV === EApplicationEnvironment.DEVELOPMENT)
+                })
+
+            httpResponse(response, request, 200, 'Token refreshed successfully', {
+                accessToken: newAccessToken,
+                refreshToken: newRefreshToken
+            })
+        } catch (error) {
+            if (error instanceof jwt.JsonWebTokenError) {
+                httpError(next, new Error('Invalid refresh token'), request, 401)
+            } else {
+                httpError(next, error, request, 500)
+            }
         }
     })
 }

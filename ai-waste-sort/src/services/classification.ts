@@ -4,6 +4,7 @@ export interface DetectionResult {
     label: string;
     confidence: number;
     bbox: [number, number, number, number]; // [x1, y1, x2, y2]
+    areaRatio?: number;
 }
 
 export interface ClassificationResult {

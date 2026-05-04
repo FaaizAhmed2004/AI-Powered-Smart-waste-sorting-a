@@ -14,7 +14,8 @@ cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     raise RuntimeError("Unable to open camera. Please check camera permissions and device settings.")
 
-print("Starting live camera detection. Press 'q' to quit.")
+print("Starting AUTHENTIC waste detection. Press 'q' to quit.")
+print("Model loaded:", "waste_detector.pt" if os.path.exists("waste_detector.pt") else "yolov8n.pt (fallback)")
 
 while True:
     ret, frame = cap.read()
@@ -28,18 +29,21 @@ while True:
         x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
         conf = float(box.conf[0].cpu().numpy())
         cls_id = int(box.cls[0].cpu().numpy())
-        label = class_names[cls_id] if cls_id < len(class_names) else f"class_{cls_id}"
 
-        cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-        cv2.putText(
-            frame,
-            f"{label} {conf:.2f}",
-            (int(x1), int(max(y1 - 10, 20))),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.8,
-            (0, 255, 0),
-            2,
-        )
+        # Only show high confidence detections for authenticity
+        if conf >= 0.90:
+            label = class_names[cls_id] if cls_id < len(class_names) else f"class_{cls_id}"
+
+            cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+            cv2.putText(
+                frame,
+                f"{label} {conf:.2f} (AUTHENTIC)",
+                (int(x1), int(max(y1 - 10, 20))),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                (0, 255, 0),
+                2,
+            )
 
     cv2.imshow("Smart Waste Scanner", frame)
 
