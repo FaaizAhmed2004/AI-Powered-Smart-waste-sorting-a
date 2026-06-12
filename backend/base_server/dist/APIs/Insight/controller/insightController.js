@@ -16,6 +16,11 @@ exports.getUserReport = exports.generateUserReport = void 0;
 const Insight_1 = __importDefault(require("../model/Insight"));
 const Classification_1 = __importDefault(require("../../Classification/model/Classification"));
 const express_validator_1 = require("express-validator");
+/**
+ * Generate a simple aggregated report for the user between two dates.
+ * This implementation reads classification records and aggregates counts/weights.
+ * You can extend it to compute CO2 saved based on custom factors.
+ */
 const generateUserReport = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const errors = (0, express_validator_1.validationResult)(req);
@@ -24,16 +29,19 @@ const generateUserReport = (req, res) => __awaiter(void 0, void 0, void 0, funct
         const { userId, periodStart, periodEnd } = req.body;
         const start = new Date(periodStart);
         const end = new Date(periodEnd);
+        // Example aggregation from Classification collection
         const records = yield Classification_1.default.find({
             userId,
             createdAt: { $gte: start, $lte: end },
         });
+        // Simple totals by label (assuming each record weight = 1 unit; replace with real weight if available)
         const totals = {};
         let totalCount = 0;
         records.forEach(r => {
             totals[r.label] = (totals[r.label] || 0) + 1;
             totalCount++;
         });
+        // Placeholder CO2 calculations: assume 0.5 kg CO2 per unit recycled (replace with real factors)
         const co2SavedKg = totalCount * 0.5;
         const report = yield Insight_1.default.create({
             userId,
@@ -46,7 +54,7 @@ const generateUserReport = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 organic: totals['Organic'] || 0,
                 eWaste: totals['E-Waste'] || 0,
                 hazardous: totals['Hazardous'] || 0,
-                totalWeightKg: totalCount,
+                totalWeightKg: totalCount, // if real weight available, sum weights instead
             },
             co2SavedKg
         });
@@ -68,4 +76,3 @@ const getUserReport = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.getUserReport = getUserReport;
-//# sourceMappingURL=insightController.js.map

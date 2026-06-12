@@ -9,4 +9,3 @@ const validateSchema = (schema, value) => {
     };
 };
 exports.validateSchema = validateSchema;
-//# sourceMappingURL=joi-validate.js.map

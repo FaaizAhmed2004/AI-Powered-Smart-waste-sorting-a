@@ -18,4 +18,3 @@ exports.default = {
         return token_model_1.default.deleteOne({ token: token });
     }
 };
-//# sourceMappingURL=token.repository.js.map

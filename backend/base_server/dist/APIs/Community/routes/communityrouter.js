@@ -3,6 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/* eslint-disable @typescript-eslint/no-misused-promises */
+// src/routes/community.routes.ts
 const express_1 = require("express");
 const communitycontroller_1 = require("../controller/communitycontroller");
 const communityvalidator_1 = require("../validator/communityvalidator");
@@ -17,4 +19,3 @@ communityrouter.post('/:id/like', authenticate_1.default, async_1.default, commu
 communityrouter.post('/:id/comment', authenticate_1.default, (0, communityvalidator_1.validate)(community_validator_1.commentSchema), (0, async_1.default)(communitycontroller_1.addComment));
 communityrouter.delete('/:id', authenticate_1.default, (0, async_1.default)(communitycontroller_1.deletePost));
 exports.default = communityrouter;
-//# sourceMappingURL=communityrouter.js.map

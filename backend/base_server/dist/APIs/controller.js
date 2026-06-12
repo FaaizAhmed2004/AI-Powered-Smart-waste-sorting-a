@@ -10,6 +10,7 @@ const health_1 = __importDefault(require("../utils/health"));
 exports.default = {
     self: (request, response, next) => {
         try {
+            // throw new Error('errors')
             (0, httpResponse_1.default)(response, request, 200, responseMessage_1.default.SUCCESS, null);
         }
         catch (error) {
@@ -30,4 +31,3 @@ exports.default = {
         }
     }
 };
-//# sourceMappingURL=controller.js.map

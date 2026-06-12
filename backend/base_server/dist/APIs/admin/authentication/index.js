@@ -10,4 +10,3 @@ router.route('/admin/register').post(admin_controller_1.default.register);
 router.route('/admin/login').post(admin_controller_1.default.login);
 router.route('/admin/logout').post(admin_controller_1.default.logout);
 exports.default = router;
-//# sourceMappingURL=index.js.map

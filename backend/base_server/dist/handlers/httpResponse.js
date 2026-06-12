@@ -19,9 +19,9 @@ exports.default = (res, req, responseStatusCode, responseMessage, data) => {
         data: data
     };
     logger_1.default.info(`Controller Response`, { meta: response });
+    //To check if the ENV is production
     if (config_1.default.ENV === application_1.EApplicationEnvironment.PRODUCTION) {
         delete response.request.ip;
     }
     res.status(responseStatusCode).json(response);
 };
-//# sourceMappingURL=httpResponse.js.map

@@ -29,4 +29,3 @@ const App = (app) => {
     app.use(`${application_1.API_ROOT}`, dashboard_1.default);
 };
 exports.default = App;
-//# sourceMappingURL=index.js.map

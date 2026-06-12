@@ -12,8 +12,10 @@ const helmet_1 = __importDefault(require("helmet"));
 const cors_1 = __importDefault(require("cors"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const app = (0, express_1.default)();
+//Middlewares
 app.use((0, helmet_1.default)());
 app.use((0, cookie_parser_1.default)());
+// Handle preflight requests
 app.options('*', (req, res) => {
     res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
@@ -39,8 +41,11 @@ app.use((0, cors_1.default)({
 }));
 app.use(express_1.default.json());
 app.use(express_1.default.static(path_1.default.join(__dirname, '../', 'public')));
+//Router
+// app.use('/v1', router)
 (0, APIs_1.default)(app);
+//404 handler
 app.use(notFound_1.default);
+//Handlers as Middlewares
 app.use(errorHandler_1.default);
 exports.default = app;
-//# sourceMappingURL=app.js.map

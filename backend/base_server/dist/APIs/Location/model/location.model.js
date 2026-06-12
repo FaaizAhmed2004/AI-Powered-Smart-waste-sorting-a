@@ -23,6 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+// src/APIs/Location/model/location.model.ts
 const mongoose_1 = __importStar(require("mongoose"));
 const RecyclingCenterSchema = new mongoose_1.Schema({
     name: {
@@ -42,13 +43,13 @@ const RecyclingCenterSchema = new mongoose_1.Schema({
             default: 'Point',
         },
         coordinates: {
-            type: [Number],
+            type: [Number], // [longitude, latitude]
             required: true,
             validate: {
                 validator: function (value) {
                     return value.length === 2 &&
-                        value[0] >= -180 && value[0] <= 180 &&
-                        value[1] >= -90 && value[1] <= 90;
+                        value[0] >= -180 && value[0] <= 180 && // longitude
+                        value[1] >= -90 && value[1] <= 90; // latitude
                 },
                 message: 'Invalid coordinates'
             }
@@ -80,6 +81,6 @@ const RecyclingCenterSchema = new mongoose_1.Schema({
 }, {
     timestamps: true,
 });
+// Index for geospatial queries
 RecyclingCenterSchema.index({ location: '2dsphere' });
 exports.default = mongoose_1.default.model('RecyclingCenter', RecyclingCenterSchema);
-//# sourceMappingURL=location.model.js.map

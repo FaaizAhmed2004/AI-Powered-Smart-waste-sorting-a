@@ -11,4 +11,3 @@ const tokenSchema = new mongoose_1.default.Schema({
     }
 }, { timestamps: true });
 exports.default = mongoose_1.default.model('Token', tokenSchema);
-//# sourceMappingURL=token.model.js.map

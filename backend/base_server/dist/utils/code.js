@@ -10,4 +10,3 @@ exports.default = {
         return (0, crypto_1.randomInt)(min, max).toString();
     }
 };
-//# sourceMappingURL=code.js.map

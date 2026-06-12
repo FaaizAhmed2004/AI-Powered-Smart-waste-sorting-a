@@ -23,6 +23,7 @@ exports.default = (0, async_1.default)((request, _response, next) => __awaiter(v
     try {
         const req = request;
         const { cookies, headers } = req;
+        // Try to get token from Authorization header first, then from cookies
         let accessToken = (_a = headers.authorization) === null || _a === void 0 ? void 0 : _a.replace('Bearer ', '');
         if (!accessToken) {
             const cookieToken = typeof (cookies === null || cookies === void 0 ? void 0 : cookies.accessToken) === 'string' ? cookies.accessToken : undefined;
@@ -36,11 +37,13 @@ exports.default = (0, async_1.default)((request, _response, next) => __awaiter(v
                 const user = yield user_repository_1.default.findUserById(userId);
                 if (user) {
                     req.authenticatedUser = user;
+                    // Also set req.user for compatibility with classification controller
                     req.user = { _id: userId, id: userId };
                     return next();
                 }
             }
             catch (tokenError) {
+                // Handle specific JWT errors
                 if (tokenError instanceof Error) {
                     if (tokenError.name === 'TokenExpiredError') {
                         (0, httpError_1.default)(next, new Error('Access token expired'), request, 401);
@@ -51,6 +54,7 @@ exports.default = (0, async_1.default)((request, _response, next) => __awaiter(v
                         return;
                     }
                     else {
+                        // Re-throw other errors
                         throw tokenError;
                     }
                 }
@@ -65,4 +69,3 @@ exports.default = (0, async_1.default)((request, _response, next) => __awaiter(v
         (0, httpError_1.default)(next, error, request, 500);
     }
 }));
-//# sourceMappingURL=authenticate.js.map

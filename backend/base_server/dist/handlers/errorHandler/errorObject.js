@@ -7,6 +7,7 @@ const responseMessage_1 = __importDefault(require("../../constant/responseMessag
 const application_1 = require("../../constant/application");
 const config_1 = __importDefault(require("../../config/config"));
 const logger_1 = __importDefault(require("../logger"));
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 exports.default = (err, req, errorStatusCode = 500) => {
     const errorObj = {
         success: false,
@@ -21,10 +22,10 @@ exports.default = (err, req, errorStatusCode = 500) => {
         trace: err instanceof Error ? { error: err.stack } : null
     };
     logger_1.default.error(`Controller Response`, { meta: errorObj });
+    //To check if the ENV is production
     if (config_1.default.ENV === application_1.EApplicationEnvironment.PRODUCTION) {
         delete errorObj.request.ip;
         delete errorObj.trace;
     }
     return errorObj;
 };
-//# sourceMappingURL=errorObject.js.map

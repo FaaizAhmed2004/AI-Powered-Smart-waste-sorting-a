@@ -26,12 +26,14 @@ exports.default = {
     register: (0, async_1.default)((request, response, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const { body } = request;
+            // Payload validation
             const { error, payload } = (0, joi_validate_1.validateSchema)(admin_schema_1.adminRegisterSchema, body);
             if (error) {
                 return (0, httpError_1.default)(next, error, request, 422);
             }
             const registrationResult = yield (0, admin_service_1.adminRegistrationService)(payload);
             if (registrationResult.success === true) {
+                // Set cookies
                 const DOMAIN = health_1.default.getDomain();
                 response
                     .cookie('adminAccessToken', registrationResult.data.accessToken, {
@@ -65,12 +67,14 @@ exports.default = {
     login: (0, async_1.default)((request, response, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const { body } = request;
+            // Payload validation
             const { error, payload } = (0, joi_validate_1.validateSchema)(admin_schema_1.adminLoginSchema, body);
             if (error) {
                 return (0, httpError_1.default)(next, error, request, 422);
             }
             const loginResult = yield (0, admin_service_1.adminLoginService)(payload);
             if (loginResult.success === true) {
+                // Set cookies
                 const DOMAIN = health_1.default.getDomain();
                 response
                     .cookie('adminAccessToken', loginResult.data.accessToken, {
@@ -104,6 +108,7 @@ exports.default = {
     logout: (0, async_1.default)((request, response, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const DOMAIN = health_1.default.getDomain();
+            // Clear cookies
             response
                 .clearCookie('adminAccessToken', {
                 path: '/v1',
@@ -128,4 +133,3 @@ exports.default = {
         }
     }))
 };
-//# sourceMappingURL=admin.controller.js.map

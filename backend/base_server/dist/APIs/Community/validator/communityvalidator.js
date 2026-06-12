@@ -27,4 +27,3 @@ const validate = (schema) => (req, res, next) => __awaiter(void 0, void 0, void 
     }
 });
 exports.validate = validate;
-//# sourceMappingURL=communityvalidator.js.map

@@ -21,4 +21,3 @@ exports.default = {
         return user_model_1.default.create(payload);
     }
 };
-//# sourceMappingURL=user.repository.js.map

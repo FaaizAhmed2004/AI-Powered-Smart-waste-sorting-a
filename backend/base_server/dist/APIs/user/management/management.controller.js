@@ -23,4 +23,3 @@ exports.default = {
         }
     }
 };
-//# sourceMappingURL=management.controller.js.map

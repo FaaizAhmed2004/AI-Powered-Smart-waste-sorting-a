@@ -40,4 +40,3 @@ const InsightSchema = new mongoose_1.Schema({
     co2SavedKg: { type: Number, default: 0 },
 }, { timestamps: true });
 exports.default = mongoose_1.default.model('InsightReport', InsightSchema);
-//# sourceMappingURL=Insight.js.map

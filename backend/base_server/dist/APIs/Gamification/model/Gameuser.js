@@ -10,4 +10,3 @@ const GameuserSchema = new mongoose_1.Schema({
     lastActive: { type: Date, default: null },
 });
 exports.default = (0, mongoose_1.model)("GameUser", GameuserSchema);
-//# sourceMappingURL=Gameuser.js.map

@@ -6,4 +6,3 @@ exports.default = {
         return (0, countries_and_timezones_1.getTimezonesForCountry)(isoCode);
     }
 };
-//# sourceMappingURL=date-and-time.js.map

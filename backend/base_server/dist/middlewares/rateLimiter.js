@@ -9,6 +9,7 @@ const rate_limiter_1 = require("../config/rate-limiter");
 const httpError_1 = __importDefault(require("../handlers/errorHandler/httpError"));
 const responseMessage_1 = __importDefault(require("../constant/responseMessage"));
 exports.default = (req, _, next) => {
+    //if development, dont limit!
     if (config_1.default.ENV === application_1.EApplicationEnvironment.DEVELOPMENT) {
         return next();
     }
@@ -23,4 +24,3 @@ exports.default = (req, _, next) => {
         });
     }
 };
-//# sourceMappingURL=rateLimiter.js.map

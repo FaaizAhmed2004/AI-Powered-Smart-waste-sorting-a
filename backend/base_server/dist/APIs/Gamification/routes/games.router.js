@@ -7,4 +7,3 @@ gamerouter.post("/classify", gamecontroller_1.recordClassification);
 gamerouter.post("/penalize", gamecontroller_1.penalizeIncorrect);
 gamerouter.get("/leaderboard", gamecontroller_1.getLeaderboard);
 exports.default = gamerouter;
-//# sourceMappingURL=games.router.js.map

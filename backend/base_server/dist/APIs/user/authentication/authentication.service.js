@@ -32,16 +32,21 @@ const token_repository_1 = __importDefault(require("../_shared/repo/token.reposi
 dayjs_1.default.extend(utc_1.default);
 const registrationService = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, phoneNumber, email, password } = payload;
+    // Parsing and validating phone number
     const { countryCode, internationalNumber, isoCode } = parsers_1.default.parsePhoneNumber('+' + phoneNumber);
     if (!countryCode || !internationalNumber || !isoCode) {
         throw new errors_1.CustomError(responseMessage_1.default.auth.INVALID_PHONE_NUMBER, 422);
     }
+    // Extracting country timezone
     const timezone = date_and_time_1.default.countryTimezone(isoCode);
     if (!timezone || timezone.length === 0) {
         throw new errors_1.CustomError(responseMessage_1.default.auth.INVALID_PHONE_NUMBER, 422);
     }
+    //Validate if user already exists
     yield validations_1.default.userAlreadyExistsViaEmail(email);
+    //Encrypting password
     const hashedPassword = yield hashing_1.default.hashPassword(password);
+    //Account confimation token and code generation
     const token = code_1.default.generateRandomId();
     const OTP = code_1.default.generateOTP(6);
     const userObj = {
@@ -69,13 +74,16 @@ const registrationService = (payload) => __awaiter(void 0, void 0, void 0, funct
         password: hashedPassword,
         consent: true
     };
+    //adding user to db
     const newUser = yield user_repository_1.default.createUser(userObj);
+    //Sending confimation emails
     const confimationURL = `Frontendhost/confimation/${token}?code=${OTP}`;
     const to = [email];
     const subject = `Confirm your account`;
     const text = `Hey ${name}, Please confirm your account by clicking the link belown\n\n${confimationURL}`;
     email_1.default.sendEmail(to, subject, text).catch((error) => {
         logger_1.default.error('Error sending email', {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             meta: error
         });
     });
@@ -90,17 +98,21 @@ const accountConfirmationService = (token, code) => __awaiter(void 0, void 0, vo
     if (!user) {
         throw new errors_1.CustomError(responseMessage_1.default.auth.USER_NOT_EXIST, 404);
     }
+    //Check if account is already confirmed
     if (user.accountConfimation.status) {
         throw new errors_1.CustomError(responseMessage_1.default.auth.ALREADY_CONFIRMED('Account'), 400);
     }
+    //if not, lets confirm
     user.accountConfimation.status = true;
     user.accountConfimation.timestamp = (0, dayjs_1.default)().utc().toDate();
     yield user.save();
+    //Sending confimation emails
     const to = [user.email];
     const subject = `Welcome to the base! `;
     const text = `Account has been confirmed.`;
     email_1.default.sendEmail(to, subject, text).catch((error) => {
         logger_1.default.error('Error sending email', {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             meta: error
         });
     });
@@ -112,18 +124,22 @@ const accountConfirmationService = (token, code) => __awaiter(void 0, void 0, vo
 exports.accountConfirmationService = accountConfirmationService;
 const loginService = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = payload;
+    //Check if the user is registered
     const user = yield user_repository_1.default.findUserByEmail(email, 'password');
     if (!user) {
         throw new errors_1.CustomError(responseMessage_1.default.NOT_FOUND('User'), 404);
     }
+    //Validate password
     const isValidPassword = yield hashing_1.default.comparePassword(password, user.password);
     if (!isValidPassword) {
         throw new errors_1.CustomError(responseMessage_1.default.auth.INVALID_EMAIL_OR_PASSWORD, 400);
     }
+    //Genrate tokens
     const accessToken = jwt_1.default.generateToken({ userId: user._id }, config_1.default.TOKENS.ACCESS.SECRET, config_1.default.TOKENS.ACCESS.EXPIRY);
     const refreshToken = jwt_1.default.generateToken({ userId: user._id }, config_1.default.TOKENS.REFRESH.SECRET, config_1.default.TOKENS.REFRESH.EXPIRY);
     user.lastLoginAt = (0, dayjs_1.default)().utc().toDate();
     yield user.save();
+    //Storing refresh token into db
     const token = {
         token: refreshToken
     };
@@ -136,4 +152,3 @@ const loginService = (payload) => __awaiter(void 0, void 0, void 0, function* ()
     };
 });
 exports.loginService = loginService;
-//# sourceMappingURL=authentication.service.js.map

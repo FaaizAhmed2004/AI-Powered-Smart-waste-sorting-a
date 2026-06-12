@@ -33,4 +33,3 @@ exports.default = {
         }
     }
 };
-//# sourceMappingURL=health.js.map

@@ -10,4 +10,3 @@ const rateLimiter_1 = __importDefault(require("../../../middlewares/rateLimiter"
 const router = (0, express_1.Router)();
 router.route('/me').get(rateLimiter_1.default, authenticate_1.default, management_controller_1.default.me);
 exports.default = router;
-//# sourceMappingURL=index.js.map

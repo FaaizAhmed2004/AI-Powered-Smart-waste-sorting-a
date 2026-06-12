@@ -16,6 +16,7 @@ exports.getWasteTypes = exports.getNearestRecyclingCenters = exports.getRecyclin
 const async_1 = __importDefault(require("../../../handlers/async"));
 const httpResponse_1 = __importDefault(require("../../../handlers/httpResponse"));
 const location_model_1 = __importDefault(require("../model/location.model"));
+// Waste types data
 const WASTE_TYPES = [
     { type: 'Plastic', color: 'bg-blue-500' },
     { type: 'Paper', color: 'bg-amber-500' },
@@ -27,6 +28,7 @@ const WASTE_TYPES = [
     { type: 'Organic', color: 'bg-green-500' },
     { type: 'Textile', color: 'bg-pink-500' },
 ];
+// Get all recycling centers
 exports.getRecyclingCenters = (0, async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const centers = yield location_model_1.default.find({ isOpen: true })
         .select('name address location types hours phone rating')
@@ -56,6 +58,7 @@ exports.getRecyclingCenters = (0, async_1.default)((req, res) => __awaiter(void 
         wasteTypes: WASTE_TYPES,
     });
 }));
+// Get nearest recycling centers
 exports.getNearestRecyclingCenters = (0, async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { latitude, longitude, radius = 10000 } = req.query;
     if (!latitude || !longitude) {
@@ -105,6 +108,7 @@ exports.getNearestRecyclingCenters = (0, async_1.default)((req, res) => __awaite
     });
     (0, httpResponse_1.default)(res, req, 200, 'Nearest recycling centers retrieved successfully', centersWithDistance);
 }));
+// Get waste types
 const getWasteTypes = (req, res) => {
     (0, httpResponse_1.default)(res, req, 200, 'Waste types retrieved successfully', WASTE_TYPES);
 };
@@ -122,4 +126,3 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 function toRadians(degrees) {
     return degrees * (Math.PI / 180);
 }
-//# sourceMappingURL=location.controller.js.map

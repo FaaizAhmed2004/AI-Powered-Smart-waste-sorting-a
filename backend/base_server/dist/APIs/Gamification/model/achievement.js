@@ -12,4 +12,3 @@ const checkAchievements = (totalClassifications) => {
     return earned;
 };
 exports.checkAchievements = checkAchievements;
-//# sourceMappingURL=achievement.js.map

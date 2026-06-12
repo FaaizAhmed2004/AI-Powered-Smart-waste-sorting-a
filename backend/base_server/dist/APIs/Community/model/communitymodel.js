@@ -23,6 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+// src/models/community.model.ts
 const mongoose_1 = __importStar(require("mongoose"));
 const CommentSchema = new mongoose_1.Schema({
     user: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -36,4 +37,3 @@ const CommunityPostSchema = new mongoose_1.Schema({
     comments: [CommentSchema],
 }, { timestamps: true });
 exports.default = mongoose_1.default.model('CommunityPost', CommunityPostSchema);
-//# sourceMappingURL=communitymodel.js.map

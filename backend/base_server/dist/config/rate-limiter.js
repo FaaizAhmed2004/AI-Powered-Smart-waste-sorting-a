@@ -13,4 +13,3 @@ const initRateLimiter = (mongooseConnection) => {
     });
 };
 exports.initRateLimiter = initRateLimiter;
-//# sourceMappingURL=rate-limiter.js.map

@@ -28,4 +28,3 @@ exports.loginSchema = joi_1.default.object({
         .trim()
         .required()
 });
-//# sourceMappingURL=validation.schema.js.map

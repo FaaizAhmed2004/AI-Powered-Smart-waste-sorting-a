@@ -22,6 +22,7 @@ const config_1 = __importDefault(require("../config/config"));
 function seedDefaultAdmin() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            // Default admin credentials
             const defaultAdmin = {
                 email: 'admin@wasteSort.com',
                 password: 'Admin@123',
@@ -36,6 +37,7 @@ function seedDefaultAdmin() {
                     'analytics.read', 'system.manage'
                 ]
             };
+            // Check if default admin exists
             const adminExists = yield Admin_1.default.findOne({ email: defaultAdmin.email });
             if (adminExists) {
                 logger_1.default.info(`Default admin account already exists, skipping seed`, {
@@ -43,8 +45,10 @@ function seedDefaultAdmin() {
                 });
                 return;
             }
+            // Hash the password
             const saltRounds = parseInt(config_1.default.BCRYPT.SALT_ROUNDS);
             const hashedPassword = yield bcrypt_1.default.hash(defaultAdmin.password, saltRounds);
+            // Create the admin
             yield Admin_1.default.create(Object.assign(Object.assign({}, defaultAdmin), { password: hashedPassword }));
             logger_1.default.info(`Default admin account created successfully`, {
                 meta: { email: defaultAdmin.email }
@@ -62,18 +66,20 @@ function seedDefaultAdmin() {
 function bootstrap() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            // Connect to the database
             const connection = yield database_1.default.connect();
             logger_1.default.info(`Database connection established`, {
                 meta: { CONNECTION_NAME: connection.name }
             });
+            // Seed default admin
             yield seedDefaultAdmin();
+            // Initialize rate limiter
             (0, rate_limiter_1.initRateLimiter)(connection);
             logger_1.default.info(`Rate limiter initiated`);
         }
         catch (error) {
             logger_1.default.error(`Error during bootstrap:`, { meta: error });
-            throw error;
+            throw error; // Re-throw the error to stop server startup
         }
     });
 }
-//# sourceMappingURL=index.js.map

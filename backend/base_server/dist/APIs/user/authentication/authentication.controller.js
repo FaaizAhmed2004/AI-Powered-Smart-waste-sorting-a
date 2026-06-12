@@ -29,6 +29,7 @@ exports.default = {
     register: (0, async_1.default)((request, response, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const { body } = request;
+            //Payload validation
             const { error, payload } = (0, joi_validate_1.validateSchema)(validation_schema_1.registerSchema, body);
             if (error) {
                 return (0, httpError_1.default)(next, error, request, 422);
@@ -67,12 +68,14 @@ exports.default = {
     login: (0, async_1.default)((request, response, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const { body } = request;
+            //Payload validation
             const { error, payload } = (0, joi_validate_1.validateSchema)(validation_schema_1.loginSchema, body);
             if (error) {
                 return (0, httpError_1.default)(next, error, request, 422);
             }
             const isLoggedIn = yield (0, authentication_service_1.loginService)(payload);
             if (isLoggedIn.success === true) {
+                //sending cookies
                 const DOMAIN = health_1.default.getDomain();
                 response
                     .cookie('accessToken', isLoggedIn.accessToken, {
@@ -111,6 +114,7 @@ exports.default = {
                 yield token_repository_1.default.deleteToken(refreshToken);
             }
             const DOMAIN = health_1.default.getDomain();
+            //Clearing cookies
             response
                 .clearCookie('accessToken', {
                 path: '/v1',
@@ -143,15 +147,20 @@ exports.default = {
             if (!refreshToken) {
                 return (0, httpError_1.default)(next, new Error('Refresh token not provided'), request, 401);
             }
+            // Verify refresh token
             const decoded = jsonwebtoken_1.default.verify(refreshToken, config_1.default.TOKENS.REFRESH.SECRET);
+            // Check if refresh token exists in database
             const tokenExists = yield token_repository_1.default.findToken(refreshToken);
             if (!tokenExists) {
                 return (0, httpError_1.default)(next, new Error('Invalid refresh token'), request, 401);
             }
+            // Generate new tokens
             const newAccessToken = jsonwebtoken_1.default.sign({ userId: decoded.userId }, config_1.default.TOKENS.ACCESS.SECRET, { expiresIn: config_1.default.TOKENS.ACCESS.EXPIRY });
             const newRefreshToken = jsonwebtoken_1.default.sign({ userId: decoded.userId }, config_1.default.TOKENS.REFRESH.SECRET, { expiresIn: config_1.default.TOKENS.REFRESH.EXPIRY });
+            // Delete old refresh token and save new one
             yield token_repository_1.default.deleteToken(refreshToken);
             yield token_repository_1.default.saveToken(newRefreshToken, decoded.userId);
+            // Set new cookies
             const DOMAIN = health_1.default.getDomain();
             response
                 .cookie('accessToken', newAccessToken, {
@@ -185,4 +194,3 @@ exports.default = {
         }
     }))
 };
-//# sourceMappingURL=authentication.controller.js.map

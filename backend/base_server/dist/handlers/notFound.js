@@ -13,4 +13,3 @@ exports.default = (req, _, next) => {
         (0, httpError_1.default)(next, error, req, 404);
     }
 };
-//# sourceMappingURL=notFound.js.map

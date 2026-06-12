@@ -31,4 +31,3 @@ const EducationTipSchema = new mongoose_1.Schema({
     examples: [{ type: String }],
 }, { timestamps: true });
 exports.default = mongoose_1.default.model('EducationTip', EducationTipSchema);
-//# sourceMappingURL=Education.js.map

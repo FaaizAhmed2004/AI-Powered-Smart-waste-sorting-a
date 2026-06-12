@@ -22,18 +22,23 @@ const recordClassification = (req, res) => __awaiter(void 0, void 0, void 0, fun
         const user = yield Gameuser_1.default.findById(userId);
         if (!user)
             return res.status(404).json({ message: "User not found" });
+        // Save prediction log
         const prediction = yield predictionmodel_1.default.create({ user: userId, label, confidence });
+        // Award points
         let points = 0;
         if (confidence > 0.7)
             points = 10;
         else if (confidence >= 0.5)
             points = 5;
         user.points += points;
+        // Daily streak
         const today = new Date().toDateString();
         const lastActive = user.lastActive ? user.lastActive.toDateString() : null;
         if (lastActive === today) {
+            // Already logged today → do nothing
         }
         else {
+            // New active day
             if (user.lastActive &&
                 new Date(user.lastActive).getTime() >= Date.now() - 1000 * 60 * 60 * 24 * 2) {
                 user.dailyStreak += 1;
@@ -43,6 +48,7 @@ const recordClassification = (req, res) => __awaiter(void 0, void 0, void 0, fun
             }
             user.lastActive = new Date();
         }
+        // Check achievements
         const totalPred = yield predictionmodel_1.default.countDocuments({ user: userId });
         const newBadges = (0, achievement_1.checkAchievements)(totalPred);
         newBadges.forEach((b) => {
@@ -64,6 +70,7 @@ const recordClassification = (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.recordClassification = recordClassification;
+//penalizeincorrectness 
 const penalizeIncorrect = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId, predictionId } = req.body;
@@ -86,6 +93,7 @@ const penalizeIncorrect = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.penalizeIncorrect = penalizeIncorrect;
+//leaderboards
 const getLeaderboard = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const users = yield Gameuser_1.default.find()
@@ -99,4 +107,3 @@ const getLeaderboard = (_req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.getLeaderboard = getLeaderboard;
-//# sourceMappingURL=gamecontroller.js.map

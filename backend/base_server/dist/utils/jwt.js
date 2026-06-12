@@ -12,4 +12,3 @@ exports.default = {
         return jsonwebtoken_1.default.verify(token, secret);
     }
 };
-//# sourceMappingURL=jwt.js.map

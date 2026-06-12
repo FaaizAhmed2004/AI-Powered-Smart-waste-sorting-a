@@ -9,4 +9,3 @@ const validateRequest = (_req, _res, next) => {
     return next();
 };
 exports.validateRequest = validateRequest;
-//# sourceMappingURL=validatorreauest.js.map

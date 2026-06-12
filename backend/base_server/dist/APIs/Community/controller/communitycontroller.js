@@ -1,4 +1,6 @@
 "use strict";
+/* eslint-disable @typescript-eslint/no-namespace */
+// src/controllers/community.controller.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -73,6 +75,7 @@ const toggleLike = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         }
         const userId = new mongoose_1.Types.ObjectId(req.user._id);
         if (post.likes.includes(userId)) {
+            // already liked → unlike
             post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
         }
         else {
@@ -133,4 +136,3 @@ const deletePost = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.deletePost = deletePost;
-//# sourceMappingURL=communitycontroller.js.map

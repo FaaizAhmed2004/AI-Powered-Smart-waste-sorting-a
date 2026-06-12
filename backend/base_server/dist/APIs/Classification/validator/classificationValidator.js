@@ -10,4 +10,3 @@ exports.classifyValidator = [
 exports.getUserClassificationsValidator = [
     (0, express_validator_1.param)('userId').notEmpty().withMessage('User ID is required')
 ];
-//# sourceMappingURL=classificationValidator.js.map

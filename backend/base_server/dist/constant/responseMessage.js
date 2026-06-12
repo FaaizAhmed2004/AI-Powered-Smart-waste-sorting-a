@@ -16,4 +16,3 @@ exports.default = {
         LOGIN_SUCCESSFUL: `Login successful`
     }
 };
-//# sourceMappingURL=responseMessage.js.map

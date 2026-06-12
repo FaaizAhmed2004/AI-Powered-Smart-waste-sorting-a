@@ -28,4 +28,3 @@ exports.adminLoginSchema = joi_1.default.object({
         'any.required': 'Password is required'
     })
 });
-//# sourceMappingURL=admin.schema.js.map

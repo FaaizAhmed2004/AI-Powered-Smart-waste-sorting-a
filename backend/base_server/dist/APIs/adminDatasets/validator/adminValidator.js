@@ -7,10 +7,10 @@ exports.retrainValidator = [
     (0, express_validator_1.body)('datasetId').optional().isString()
 ];
 exports.datasetUploadValidator = [
+    // file handling (multer) handles file presence, but we can validate label
     (0, express_validator_1.body)('label').optional().isString().withMessage('label must be string'),
 ];
 exports.adminGetUsersValidator = [
     (0, express_validator_1.param)('page').optional().isInt({ min: 1 }),
     (0, express_validator_1.param)('limit').optional().isInt({ min: 1 }),
 ];
-//# sourceMappingURL=adminValidator.js.map

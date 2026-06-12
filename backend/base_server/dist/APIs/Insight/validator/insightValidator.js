@@ -10,4 +10,3 @@ exports.generateReportValidator = [
     (0, express_validator_1.body)('periodStart').notEmpty().isISO8601().toDate().withMessage('Valid periodStart is required'),
     (0, express_validator_1.body)('periodEnd').notEmpty().isISO8601().toDate().withMessage('Valid periodEnd is required'),
 ];
-//# sourceMappingURL=insightValidator.js.map

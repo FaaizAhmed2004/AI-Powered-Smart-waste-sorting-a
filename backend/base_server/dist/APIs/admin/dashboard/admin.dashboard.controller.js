@@ -16,10 +16,12 @@ const httpResponse_1 = __importDefault(require("../../../handlers/httpResponse")
 const httpError_1 = __importDefault(require("../../../handlers/errorHandler/httpError"));
 const async_1 = __importDefault(require("../../../handlers/async"));
 const errors_1 = require("../../../utils/errors");
-const user_model_1 = __importDefault(require("../../user/_shared/models/user.model"));
+// Import models (you'll need to check the actual paths)
+const user_model_1 = __importDefault(require("../../user/_shared/models/user.model")); // Adjust path as needed
 const Classification_1 = __importDefault(require("../../Classification/model/Classification"));
 const Admin_1 = __importDefault(require("../model/Admin"));
 exports.default = {
+    // Get dashboard overview statistics
     getDashboardStats: (0, async_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const [totalUsers, totalClassifications, totalAdmins, recentUsers, recentClassifications] = yield Promise.all([
@@ -29,6 +31,7 @@ exports.default = {
                 user_model_1.default.find().sort({ createdAt: -1 }).limit(5).select('-password'),
                 Classification_1.default.find().sort({ createdAt: -1 }).limit(10).populate('userId', 'email name')
             ]);
+            // Get classifications by category
             const classificationsByCategory = yield Classification_1.default.aggregate([
                 {
                     $group: {
@@ -40,6 +43,7 @@ exports.default = {
                     $sort: { count: -1 }
                 }
             ]);
+            // Get user registrations by month (last 6 months)
             const sixMonthsAgo = new Date();
             sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
             const userRegistrationsByMonth = yield user_model_1.default.aggregate([
@@ -88,6 +92,7 @@ exports.default = {
             }
         }
     })),
+    // Get all users with pagination
     getAllUsers: (0, async_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const page = parseInt(req.query.page) || 1;
@@ -96,6 +101,7 @@ exports.default = {
             const sortBy = req.query.sortBy || 'createdAt';
             const sortOrder = req.query.sortOrder || 'desc';
             const skip = (page - 1) * limit;
+            // Build search query
             const searchQuery = {};
             if (search) {
                 searchQuery.$or = [
@@ -103,6 +109,7 @@ exports.default = {
                     { name: { $regex: search, $options: 'i' } }
                 ];
             }
+            // Build sort object
             const sort = {};
             sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
             const [users, totalUsers] = yield Promise.all([
@@ -113,6 +120,7 @@ exports.default = {
                     .limit(limit),
                 user_model_1.default.countDocuments(searchQuery)
             ]);
+            // Get classification counts for each user
             const usersWithStats = yield Promise.all(users.map((user) => __awaiter(void 0, void 0, void 0, function* () {
                 const classificationCount = yield Classification_1.default.countDocuments({ userId: user._id });
                 return Object.assign(Object.assign({}, user.toObject()), { classificationCount });
@@ -138,6 +146,7 @@ exports.default = {
             }
         }
     })),
+    // Get user details by ID
     getUserById: (0, async_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const { userId } = req.params;
@@ -145,7 +154,9 @@ exports.default = {
             if (!user) {
                 throw new errors_1.CustomError('User not found', 404);
             }
+            // Get user's classifications
             const classifications = yield Classification_1.default.find({ userId }).sort({ createdAt: -1 });
+            // Get user statistics
             const stats = {
                 totalClassifications: classifications.length,
                 classificationsByCategory: yield Classification_1.default.aggregate([
@@ -173,6 +184,7 @@ exports.default = {
             }
         }
     })),
+    // Update user status (activate/deactivate)
     updateUserStatus: (0, async_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const { userId } = req.params;
@@ -192,6 +204,7 @@ exports.default = {
             }
         }
     })),
+    // Delete user
     deleteUser: (0, async_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const { userId } = req.params;
@@ -199,7 +212,9 @@ exports.default = {
             if (!user) {
                 throw new errors_1.CustomError('User not found', 404);
             }
+            // Delete user's classifications
             yield Classification_1.default.deleteMany({ userId });
+            // Delete user
             yield user_model_1.default.findByIdAndDelete(userId);
             (0, httpResponse_1.default)(res, req, 200, 'User deleted successfully', null);
         }
@@ -212,6 +227,7 @@ exports.default = {
             }
         }
     })),
+    // Get all classifications with pagination
     getAllClassifications: (0, async_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const page = parseInt(req.query.page) || 1;
@@ -220,10 +236,12 @@ exports.default = {
             const sortBy = req.query.sortBy || 'createdAt';
             const sortOrder = req.query.sortOrder || 'desc';
             const skip = (page - 1) * limit;
+            // Build filter query
             const filterQuery = {};
             if (category) {
                 filterQuery.label = category;
             }
+            // Build sort object
             const sort = {};
             sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
             const [classifications, totalClassifications] = yield Promise.all([
@@ -255,6 +273,7 @@ exports.default = {
             }
         }
     })),
+    // Delete classification
     deleteClassification: (0, async_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const { classificationId } = req.params;
@@ -274,4 +293,3 @@ exports.default = {
         }
     }))
 };
-//# sourceMappingURL=admin.dashboard.controller.js.map

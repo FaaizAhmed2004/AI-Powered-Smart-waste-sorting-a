@@ -51,8 +51,8 @@ const adminSchema = new mongoose_1.Schema({
     timestamps: true,
     versionKey: false
 });
+// Index for better query performance
 adminSchema.index({ email: 1 });
 adminSchema.index({ role: 1 });
 adminSchema.index({ isActive: 1 });
 exports.default = (0, mongoose_1.model)('Admin', adminSchema);
-//# sourceMappingURL=Admin.js.map

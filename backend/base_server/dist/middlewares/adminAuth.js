@@ -90,4 +90,3 @@ const requireSuperAdmin = (req, res, next) => {
     }
 };
 exports.requireSuperAdmin = requireSuperAdmin;
-//# sourceMappingURL=adminAuth.js.map

@@ -33,4 +33,3 @@ const DatasetFileSchema = new mongoose_1.Schema({
     mimeType: { type: String }
 }, { timestamps: { createdAt: 'uploadedAt' } });
 exports.default = mongoose_1.default.model('DatasetFile', DatasetFileSchema);
-//# sourceMappingURL=DatasetFile.js.map

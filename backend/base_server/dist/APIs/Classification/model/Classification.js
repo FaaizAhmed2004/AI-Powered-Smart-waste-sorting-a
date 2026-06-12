@@ -32,4 +32,3 @@ const classificationSchema = new mongoose_1.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 exports.default = mongoose_1.default.model('Classification', classificationSchema);
-//# sourceMappingURL=Classification.js.map

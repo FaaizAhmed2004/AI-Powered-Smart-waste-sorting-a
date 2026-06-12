@@ -7,4 +7,3 @@ var EApplicationEnvironment;
     EApplicationEnvironment["DEVELOPMENT"] = "development";
 })(EApplicationEnvironment || (exports.EApplicationEnvironment = EApplicationEnvironment = {}));
 exports.API_ROOT = '/v1';
-//# sourceMappingURL=application.js.map

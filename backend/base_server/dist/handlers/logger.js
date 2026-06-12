@@ -34,6 +34,7 @@ const path_1 = __importDefault(require("path"));
 const sourceMapSupport = __importStar(require("source-map-support"));
 const colorette_1 = require("colorette");
 require("winston-mongodb");
+//linking source map
 sourceMapSupport.install();
 const colorize = (level) => {
     switch (level) {
@@ -48,9 +49,11 @@ const colorize = (level) => {
     }
 };
 const logFormat = winston_1.format.printf((info) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { level, message, timestamp, meta = {} } = info;
     const customLevel = colorize(level.toUpperCase());
     const customTimestamp = (0, colorette_1.green)(timestamp);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const customMessage = message;
     const customMeta = util_1.default.inspect(meta, {
         showHidden: false,
@@ -61,8 +64,10 @@ const logFormat = winston_1.format.printf((info) => {
     return customLog;
 });
 const fileFormat = winston_1.format.printf((info) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { level, message, timestamp, meta = {} } = info;
     const logMeta = {};
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     for (const [key, value] of Object.entries(meta)) {
         if (value instanceof Error) {
             logMeta[key] = {
@@ -77,7 +82,9 @@ const fileFormat = winston_1.format.printf((info) => {
     }
     const logData = {
         level: level.toUpperCase(),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         timestamp,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         message,
         meta: logMeta
     };
@@ -120,4 +127,3 @@ exports.default = (0, winston_1.createLogger)({
     },
     transports: [...fileTransport(), ...(config_1.default.DATABASE_URL ? dbTransport() : []), ...consoleTransport()]
 });
-//# sourceMappingURL=logger.js.map

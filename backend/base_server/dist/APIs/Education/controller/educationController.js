@@ -77,4 +77,3 @@ const deleteTip = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.deleteTip = deleteTip;
-//# sourceMappingURL=educationController.js.map
