@@ -32,6 +32,7 @@ app.use(
             'http://127.0.0.1:3000',
             'http://127.0.0.1:5173',
             'http://localhost:8081',
+            'https://ai-powered-smart-waste-sorting-a.vercel.app',
             'http://127.0.0.1:8080'
         ],
         credentials: true,
