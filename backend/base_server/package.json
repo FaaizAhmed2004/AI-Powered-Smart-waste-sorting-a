@@ -7,9 +7,9 @@
     },
     "scripts": {
         "build": "npx tsc",
-        "start:dev": "cross-env NODE_ENV=development nodemon --legacy-watch src/bin/server.ts",
-        "serve": "cross-env NODE_ENV=production node dist/bin/server.js",
-        "lint": "eslint",
+        "start": "node dist/bin/server.js",
+         "dev": "cross-env NODE_ENV=development nodemon --legacy-watch src/bin/server.ts",
+            "lint": "eslint",
         "lint:fix": "eslint --fix",
         "format:check": "prettier . --check",
         "format:fix": "prettier . --fix",
